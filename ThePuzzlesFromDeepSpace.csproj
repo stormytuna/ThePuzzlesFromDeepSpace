@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="./TPFDS.props" />
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
@@ -23,16 +24,16 @@
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
     <PackageReference Include="UnityEngine.Modules" Version="6000.0.73" IncludeAssets="compile" />
     <Reference Include="Assembly-CSharp" Publicize="true">
-      <HintPath>/mnt/Games/Other/Prefixes/TheMessageFromDeepSpace/drive_c/TheMessageFromDeepSpace/The Message From Deep Space_Data/Managed/Assembly-CSharp.dll</HintPath>
+      <HintPath>$(TMFDS_Libs)/Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>/mnt/Games/Other/Prefixes/TheMessageFromDeepSpace/drive_c/TheMessageFromDeepSpace/The Message From Deep Space_Data/Managed/Unity.TextMeshPro.dll</HintPath>
+      <HintPath>$(TMFDS_Libs)/Unity.TextMeshPro.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>/mnt/Games/Other/Prefixes/TheMessageFromDeepSpace/drive_c/TheMessageFromDeepSpace/The Message From Deep Space_Data/Managed/UnityEngine.UI.dll</HintPath>
+      <HintPath>$(TMFDS_Libs)/UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>

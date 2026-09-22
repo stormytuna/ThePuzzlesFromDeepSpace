@@ -353,3 +353,5 @@ MigrationBackup/
 .idea/
 
 Thunderstore/
+# Per contributor MSBuild porperties
+TPFDS.props
