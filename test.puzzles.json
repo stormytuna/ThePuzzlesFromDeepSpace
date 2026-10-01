@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "name": "Puzzle Set One",
+    "author": "Test",
+    "version": "", 
+    "imports": [] 
+  },
+  "puzzleGroups": [
+    {
+      "title": "The Benining",
+      "puzzles": [
+        "puzzle_1",
+        "puzzle_2",
+        "puzzle_4"
+      ],
+      "meetings": {
+        "before": "none"
+      }
+    }
+  ],
+  "puzzles": {
+    "puzzle_1" : {
+      "message": [ 1, 2 ],
+      "validResponses": [
+        [ 3, 4 ],
+        [ 4, 8 ]
+      ],
+      "conversations": {
+        "before": "start_conversation",
+        "hints": [
+          { "after_tries": 5, "text": "hint:puzzle_1" },
+          { "on_respone": [ "some_respone" ], "text": "hint:puzzle_1:close_response" }
+        ]
+      }
+    }
+  },
+  "words" : [
+    {
+      "word": -1,
+      "reactions": {
+        ":3": [ "bautista_agree", "akers_upset" ],
+        "cat": [ "kitty :3" ]
+      }
+    }
+  ],
+  "conversations": {
+    "start_conversation": [
+      { "speaker": "Doppler", "text": "Get back to work please, there's more transmissions!" }
+    ],
+    "bautista_agree": [
+      { "speaker": "Bautista", "text": "Clean." },
+      { "speaker": "Bautista", "text": "Very Clean." }
+    ],
+    "alan_upset" : [
+      { "speaker": "Alan", "text": "Come on! That's not even a word." }
+    ],
+    "kitty :3": [
+      { "speaker": "Carrie", "text": "Kitty!" }
+    ]
+  }
+}
+
