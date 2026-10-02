@@ -8,6 +8,7 @@ using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
+using Newtonsoft.Json;
 
 namespace TPFDS;
 
@@ -27,41 +28,48 @@ public class TPFDSPlugin : BaseUnityPlugin
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
         harmony.PatchAll();
-        // Taco: TODO: Extract into separate function?
         if (Directory.Exists(PuzzleSetsPath)) {
-            var directory = new DirectoryInfo(PuzzleSetsPath);
-            var fileInfos = directory.GetFiles("*.puzzles.json", SearchOption.AllDirectories);
-            var puzzleSets = new List<(string directory, CustomPuzzleSetData puzzleSet)>(capacity: fileInfos.Length);
+            Puzzles = LoadPuzzleSets();
 
-            Logger.LogInfo($"Found {fileInfos.Length} possible puzzle sets");
-
-            foreach (var info in fileInfos) {
-                Logger.LogInfo($"{info.FullName}");
-                CustomPuzzleSetData data;
-                try {
-                    data = JsonUtility.FromJson<CustomPuzzleSetData>(File.ReadAllText(info.FullName));
-                } catch (Exception ex) {
-                    Logger.LogError(ex.Message);
-                    Logger.LogError($"File {info.FullName} doesn't contain a valid puzzle set definition");
-                    continue;
-                }
-
-                Logger.LogInfo($"Added puzzle set {info.Name} from {info.Directory.FullName}");
-                puzzleSets.Add((directory: info.Directory.FullName, puzzleSet: data));
-            }
-            Puzzles = puzzleSets;
+            Logger.LogInfo(Puzzles.Count);
+            foreach (var entry in Puzzles) CustomPuzzleRepository.Add(entry.directory, entry.puzzleSet);
         }
         else {
             Logger.LogInfo("Creating the directory for custom puzzle sets");
             Directory.CreateDirectory(PuzzleSetsPath);
         }
     }
+
+    static List<(string, CustomPuzzleSetData)> LoadPuzzleSets() {
+        var directory = new DirectoryInfo(PuzzleSetsPath);
+        var fileInfos = directory.GetFiles("*.puzzles.json", SearchOption.AllDirectories);
+        var puzzleSets = new List<(string directory, CustomPuzzleSetData puzzleSet)>(capacity: fileInfos.Length);
+
+        Logger.LogInfo($"Found {fileInfos.Length} possible puzzle sets");
+
+        foreach (var info in fileInfos) {
+            CustomPuzzleSetData data;
+            try {
+                data = JsonConvert.DeserializeObject<CustomPuzzleSetData>(File.ReadAllText(info.FullName));
+            } catch (Exception ex) {
+                Logger.LogError(ex.Message);
+                Logger.LogError($"File {info.FullName} doesn't contain a valid puzzle set definition");
+                continue;
+            }
+
+            Logger.LogInfo($"Added puzzle set {data.meta.name} from {info.Directory.FullName}");
+            puzzleSets.Add((directory: info.Directory.FullName, puzzleSet: data));
+        }
+
+        return puzzleSets;
+    }
 }
 
 /// Taco: NOTE: BreakWatcher.puzzles[index] sets aftter which puzzle a break should start 
 
 public static class CustomPuzzleRepository {
-    public static Dictionary<string, PuzzleList[]> Puzzles = [];
+    static Dictionary<string, PuzzleList[]> puzzles = [];
+    static Dictionary<string, (string directory, MetaData meta)> info = [];
 
     static void LogPuzzleLoadError(string reason, string puzzleName, CustomPuzzleSetData data) {
         TPFDSPlugin.Logger.LogError($"Puzzle \"{puzzleName}\" ${reason}. Skipping {data.meta.name}");
@@ -94,12 +102,19 @@ public static class CustomPuzzleRepository {
                     allowAltResponses = acceptedCount > 1,
                     altResponses = acceptedCount > 1 ? puzzle.validResponses[1..].Select(MessageFrom).ToArray() : [],
                 };
+                puzzles.Add(vanillaPuzzle);
             }
             group.puzzles = puzzles.ToArray();
+            groups.Add(group);
         }
 
-        Puzzles[data.meta.name] = groups.ToArray();
+        puzzles[data.meta.name] = groups.ToArray();
+        info[data.meta.name] = (directory, data.meta);
+
+        TPFDSPlugin.Logger.LogInfo($"Loaded {data.meta.name}");
     }
+
+    public static PuzzleList[] Get(string name) => puzzles[name];
 }
 
 [HarmonyPatch]
@@ -132,52 +147,11 @@ public static class CustomPuzzlesTest
     [HarmonyPatch(typeof(PuzzleManager), nameof(PuzzleManager.SetTotalPuzzleList))]
     [HarmonyPrefix]
     public static void FuckPuzzleList(PuzzleManager __instance) {
-        List<Puzzle> testSet = new List<Puzzle>() {
-            new Puzzle() {
-                title = "Test01",
-                rockOutput = new SignalMessage() {
-                    signals = new int[] { 10, -2, 0 }
-                },
-                winningResponse = new SignalMessage() {
-                    signals = new int[] { 0 }
-                },
-                uniqueID = 0,
-                totalID = 0,
-            },
-            new Puzzle() {
-                title = "Test02",
-                rockOutput = new SignalMessage() {
-                    signals = new int[] { 10, -2, 1 }
-                },
-                winningResponse = new SignalMessage() {
-                    signals = new int[] { 0 }
-                },
-                uniqueID = 1,
-                totalID = 1,
-            },
-            new Puzzle() {
-                title = "Test03",
-                rockOutput = new SignalMessage() {
-                    signals = new int[] { 10, -2, 1 }
-                },
-                winningResponse = new SignalMessage() {
-                    signals = new int[] { 0 }
-                },
-                uniqueID = 1,
-                totalID = 1,
-            },
-        };
-
-        __instance.puzzleLists = new PuzzleList[] {
-            new PuzzleList() {
-                puzzleGroupName = "Test Group 1",
-                puzzles = [testSet[0], testSet[1]],
-            },
-            new PuzzleList() {
-                puzzleGroupName = "Test Group 3",
-                puzzles = [testSet[2]],
-            },
-        };
+        // Taco: NOTE: Debug moment. Please out the test.puzzles.json file in %GAMEROOT%/PuzzleSets for this to work 
+        var set = CustomPuzzleRepository.Get("Puzzle Set One");
+        TPFDSPlugin.Logger.LogInfo(set.Count());
+        TPFDSPlugin.Logger.LogInfo(set[0]);
+        __instance.puzzleLists = set;
 
         var testEvent = new GameObject();
         testEvent.name = "Test 0";
@@ -217,12 +191,14 @@ public static class CustomPuzzlesTest
             actSection = "ACT Test 1",
             nextActName = "ACT Test 2",
             actName = "This is a test",
-            listsCompleted = [ __instance.PuzzleLists[0] ],
+            listsCompleted = [ ],
             journalEntriesDialogue = meeting.dc,
+            weekID = -1,
         };
 
         var breakWatcher = GameObject.FindFirstObjectByType<BreakWatcher>();
-        breakWatcher.puzzles[0] = testSet[2];
+        var first_break = set[0];
+        breakWatcher.puzzles[0] = first_break.Puzzles[1];
         breakWatcher.leaveRoomEvents[0] = leaveEvent;
 
         var testEvent2 = new GameObject();
@@ -257,14 +233,18 @@ public static class CustomPuzzlesTest
             }
         };
 
+        meeting2.journalEntryDC = meeting2.dc;
         meeting2.progressLogData = new ProgressLogData() {
             actSection = "ACT Test 2",
             nextActName = "ACT Test 3",
             actName = "Test",
+            listsCompleted = [ set[0] ],
+            journalEntriesDialogue = meeting2.dc,
+            actBreak = true,
         };
 
-        // breakWatcher.puzzles[1] = testSet[];
-        breakWatcher.leaveRoomEvents[1] = leaveEvent;
+        breakWatcher.puzzles[1] = set[0].Puzzles[2];
+        breakWatcher.leaveRoomEvents[1] = leaveEvent2;
     }
 
     [HarmonyPatch(typeof(PuzzleManager), nameof(PuzzleManager.SetDataFromLoad))]

@@ -32,6 +32,34 @@
           { "on_respone": [ "some_respone" ], "text": "hint:puzzle_1:close_response" }
         ]
       }
+    },
+    "puzzle_2" : {
+      "message": [ 1, 2 ],
+      "validResponses": [
+        [ 3, 4 ],
+        [ 4, 8 ]
+      ],
+      "conversations": {
+        "before": "start_conversation",
+        "hints": [
+          { "after_tries": 5, "text": "hint:puzzle_1" },
+          { "on_respone": [ "some_respone" ], "text": "hint:puzzle_1:close_response" }
+        ]
+      }
+    },
+    "puzzle_4" : {
+      "message": [ 1, 2 ],
+      "validResponses": [
+        [ 3, 4 ],
+        [ 4, 8 ]
+      ],
+      "conversations": {
+        "before": "start_conversation",
+        "hints": [
+          { "after_tries": 5, "text": "hint:puzzle_1" },
+          { "on_respone": [ "some_respone" ], "text": "hint:puzzle_1:close_response" }
+        ]
+      }
     }
   },
   "words" : [

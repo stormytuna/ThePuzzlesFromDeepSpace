@@ -33,6 +33,9 @@
     <Reference Include="UnityEngine.UI">
       <HintPath>$(TMFDS_Libs)/UnityEngine.UI.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(TMFDS_Libs)/Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
