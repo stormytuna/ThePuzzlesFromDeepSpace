@@ -9,6 +9,7 @@ public class CustomPuzzleSetData {
 	public PuzzleGroupData[] puzzleGroups { get; set; }
 	public Dictionary<string, PuzzleData> puzzles { get; set; }
 	public WordReactionData[] words { get; set; }
+	public Dictionary<string, MeetingData> meetings { get; set; }
 	public Dictionary<string, SpeechBubbleData[]> conversations { get; set; }
 }
 
@@ -21,8 +22,7 @@ public class MetaData {
 [Serializable]
 public class PuzzleGroupData {
 	public string title { get; set; }
-	public string[] puzzles { get; set; }
-	public (string before, string after) meetings { get; set; }
+	public string[] storyline { get; set; }
 }
 
 [Serializable]
@@ -42,6 +42,20 @@ public class PuzzleData {
 public class WordReactionData {
 	public int word { get; set; }
 	public Dictionary<string, string[]> reactions { get; set; }
+}
+
+[Serializable]
+public class MeetingData {
+	[Serializable]
+	public class Event {
+		public string room { get; set; }
+		public string[] conversations { get; set; }
+	}
+
+	public bool progressAct { get; set; }
+	public bool progressWeek { get; set; }
+	public Event[] events { get; set; }
+	public Dictionary<string, string> journals { get; set; }
 }
 
 [Serializable]

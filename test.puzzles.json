@@ -8,14 +8,12 @@
   "puzzleGroups": [
     {
       "title": "The Benining",
-      "puzzles": [
-        "puzzle_1",
-        "puzzle_2",
-        "puzzle_4"
-      ],
-      "meetings": {
-        "before": "none"
-      }
+      "storyline": [
+        "puzzle:puzzle_1",
+        "puzzle:puzzle_2",
+        "meeting:test_1",
+        "puzzle:puzzle_4"
+      ]
     }
   ],
   "puzzles": {
@@ -71,7 +69,28 @@
       }
     }
   ],
+  "meetings": {
+    "test_1": {
+      "progressAct": false,
+      "progressWeek": true,
+      "events": [
+        { "room": "breakroom", "conversations": [ "dopp_confession" ] }
+      ],
+      "journals": {
+        "Alan": "News! So hot",
+        "Carrie": "No news :/",
+        "Doppler": "Finally came clean",
+        "Bautista": "Clean."
+      }
+    }
+  },
   "conversations": {
+    "dopp_confession": [
+      { "speaker": "Doppler",  "text": "So... I like men." },
+      { "speaker": "Alan",     "text": "Oh~" },
+      { "speaker": "Carrie",   "text": "Umm. Okay Dr. Doppler." },
+      { "speaker": "Bautista", "text": "Clean." }
+    ],
     "start_conversation": [
       { "speaker": "Doppler", "text": "Get back to work please, there's more transmissions!" }
     ],
