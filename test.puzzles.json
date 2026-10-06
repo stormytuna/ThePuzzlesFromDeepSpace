@@ -73,9 +73,8 @@
     "test_1": {
       "progressAct": false,
       "progressWeek": true,
-      "events": [
-        { "room": "breakroom", "conversations": [ "dopp_confession" ] }
-      ],
+      "room": "breakroom",
+      "conversations": [ "dopp_confession" ],
       "journals": {
         "Alan": "News! So hot",
         "Carrie": "No news :/",

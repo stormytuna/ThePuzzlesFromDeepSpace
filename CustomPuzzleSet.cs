@@ -46,15 +46,10 @@ public class WordReactionData {
 
 [Serializable]
 public class MeetingData {
-	[Serializable]
-	public class Event {
-		public string room { get; set; }
-		public string[] conversations { get; set; }
-	}
-
 	public bool progressAct { get; set; }
 	public bool progressWeek { get; set; }
-	public Event[] events { get; set; }
+	public string room { get; set; }
+	public string[] conversations { get; set; }
 	public Dictionary<string, string> journals { get; set; }
 }
 
