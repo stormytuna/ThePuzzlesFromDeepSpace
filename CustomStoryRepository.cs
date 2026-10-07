@@ -26,8 +26,13 @@ public static class CustomStoryRepository  {
         var local_meetings = new List<GameObject>(capacity: local_meetingPuzzles.Capacity);
         var local_leaveRoomEvents = new List<LeaveRoomEvent>(capacity: local_meetingPuzzles.Capacity);
 
+        var finishedGroups = new Queue<PuzzleList>(capacity: data.puzzleGroups.Length);
+
         var setMeetings = CustomMeetingRepository.Get(data.meta.name);
         var dialogues = CustomDialogueRepository.GetAllFromSet(data.meta.name);
+
+        var addMeeting = false;
+        var currAct = 0;
 
         foreach (var entry in data.puzzleGroups) {
             var group = new PuzzleList() { puzzleGroupName = entry.title };
@@ -45,31 +50,51 @@ public static class CustomStoryRepository  {
                     }
 
                     var acceptedCount = puzzle.validResponses.Length;
-                    if (acceptedCount == 0) {
-                        LogEventLoadError("has no valid responses", storyEvent, data);
-                        return;
-                    }
 
                     var vanillaPuzzle = new Puzzle() {
                         title = storyEvent,
                         rockOutput = MessageFrom(puzzle.message),
-                        winningResponse = MessageFrom(puzzle.validResponses[0]),
                         allowAltResponses = acceptedCount > 1,
                         altResponses = acceptedCount > 1 ? puzzle.validResponses[1..].Select(MessageFrom).ToArray() : [],
                     };
+                    if (acceptedCount > 0) {
+                        vanillaPuzzle.winningResponse = MessageFrom(puzzle.validResponses[0]);
+                    }
                     puzzles.Add(vanillaPuzzle);
+                    if (addMeeting) {
+                        local_meetingPuzzles.Add(vanillaPuzzle);
+                        addMeeting = false;
+                    }
                 }
                 else if (IsMeeting(storyEvent)) {
                     var search = storyEvent["meeting:".Length..];
-                    if (!setMeetings.TryGetValue(search, out var meetingObj)) {
+                    if (!setMeetings.TryGetValue(search, out var meeting)) {
                         LogEventLoadError("doesn't exist", storyEvent, data);
                     }
+                    var meetingObj = data.meetings[search];
 
-                    local_meetingPuzzles.Add(puzzles[puzzles.Count - 1]);
-                    var thisMeeting  = GameObject.Instantiate(meetingObj);
+                    addMeeting = true;
+                    var thisMeeting  = GameObject.Instantiate(meeting);
                     GameObject.DontDestroyOnLoad(thisMeeting);
                     local_meetings.Add(thisMeeting);
                     local_leaveRoomEvents.Add(thisMeeting.GetComponent<LeaveRoomEvent>());
+
+                    var progressData = thisMeeting.GetComponent<Meeting>().progressLogData;
+                    progressData.actBreak = meetingObj.progressAct;
+                    if (meetingObj.progressWeek || meetingObj.progressAct) {
+                        progressData.listsCompleted = finishedGroups.ToArray();
+                        TPFDSPlugin.Logger.LogInfo(finishedGroups.Count);
+                        finishedGroups.Clear();
+                    }
+                    if (meetingObj.progressAct) {
+                        progressData.actBreak = true;
+                        progressData.actName = data.acts[currAct].name;
+                        progressData.actSection = $"ACT {data.acts[currAct].act}";
+                        currAct++;
+                        var actData = data.acts[currAct];
+                        progressData.nextActName = $"ACT {actData.act}";
+                    }
+                    thisMeeting.GetComponent<Meeting>().progressLogData = progressData;
 
                     // If this was the first meeting, then it couldn't have been chained
                     if (local_meetings.Count <= 1)
@@ -90,6 +115,7 @@ public static class CustomStoryRepository  {
 
                     previousMeeting.GetComponent<Meeting>().chainedMeeting = thisMeeting.GetComponent<Meeting>();
                     previousMeeting.GetComponent<Meeting>().chainedLRE = thisMeeting.GetComponent<LeaveRoomEvent>();
+                    addMeeting = false;
                 }
                 else {
                     LogEventLoadError("unknown type of event. Should be one of \"puzzle:\" or \"meeting:\"", storyEvent, data);
@@ -98,6 +124,7 @@ public static class CustomStoryRepository  {
             }
             group.puzzles = puzzles.ToArray();
             groups.Add(group);
+            finishedGroups.Enqueue(group);
         }
 
         puzzles[data.meta.name] = groups.ToArray();

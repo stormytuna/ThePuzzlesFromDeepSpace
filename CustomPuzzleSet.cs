@@ -6,6 +6,7 @@ namespace TPFDS;
 [Serializable]
 public class CustomPuzzleSetData {
 	public MetaData meta { get; set; }
+	public ActData[] acts;
 	public PuzzleGroupData[] puzzleGroups { get; set; }
 	public Dictionary<string, PuzzleData> puzzles { get; set; }
 	public WordReactionData[] words { get; set; }
@@ -17,6 +18,12 @@ public class CustomPuzzleSetData {
 public class MetaData {
 	public string name { get; set; }
 	public string author { get; set; }
+}
+
+[Serializable]
+public class ActData {
+	public string act;
+	public string name;
 }
 
 [Serializable]

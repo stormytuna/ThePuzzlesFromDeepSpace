@@ -5,13 +5,29 @@
     "version": "", 
     "imports": [] 
   },
+  "acts": [
+    { "act": "I", "name": "TEST" },
+    { "act": "I", "name": "ELECTRIC BOOGALOO" }
+  ],
   "puzzleGroups": [
     {
       "title": "The Benining",
       "storyline": [
         "puzzle:puzzle_1",
-        "puzzle:puzzle_2",
         "meeting:test_1",
+        "puzzle:puzzle_4"
+      ]
+    },
+    {
+      "title": "The Seconding",
+      "storyline": [
+        "puzzle:puzzle_4",
+        "meeting:test_2"
+      ]
+    },
+    {
+      "title": "The Thirding",
+      "storyline": [
         "puzzle:puzzle_4"
       ]
     }
@@ -79,6 +95,18 @@
         "Alan": "News! So hot",
         "Carrie": "No news :/",
         "Doppler": "Finally came clean",
+        "Bautista": "Clean."
+      }
+    },
+    "test_2": {
+      "progressAct": true,
+      "progressWeek": true,
+      "room": "breakroom",
+      "conversations": [ ],
+      "journals": {
+        "Alan": "...",
+        "Carrie": "...",
+        "Doppler": "...",
         "Bautista": "Clean."
       }
     }

@@ -58,6 +58,10 @@ public static class CustomMeetingRepository {
                             speaker = Speaker.Alan,
                         },
                         new DialogueFrame() {
+                            dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals["Bautista"] } },
+                            speaker = Speaker.BScientist,
+                        },
+                        new DialogueFrame() {
                             dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals["Carrie"] } },
                             speaker = Speaker.Carrie,
                         },
@@ -65,14 +69,10 @@ public static class CustomMeetingRepository {
                             dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals["Doppler"] } },
                             speaker = Speaker.Doppler,
                         },
-                        new DialogueFrame() {
-                            dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals["Bautista"] } },
-                            speaker = Speaker.BScientist,
-                        },
                     }
                 };
             }
-            if (meetingObj.progressAct) {
+            if (meetingObj.progressAct || meetingObj.progressWeek) {
                 meeting.progressLogData = new ProgressLogData() {
                     actSection = "ACT Test 1",
                     nextActName = "ACT Test 2",

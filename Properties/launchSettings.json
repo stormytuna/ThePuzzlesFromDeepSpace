@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "TMFDS" : {
+      "commandName": "Executable",
+      "executablePath": "wine",
+      "commandLineArgs": "\"The Message From Deep Space.exe\"",
+      "workingDirectory": "/home/taco/games/The Message from Deep Space",
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "WINEDEBUG": "-all",
+        "WINEDLLOVERRIDES": "winhttp=n,b",
+        "DRI_PRIME": "1"
+      }
+    }
+  }
+}
