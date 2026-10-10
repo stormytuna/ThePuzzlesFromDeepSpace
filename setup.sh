@@ -21,5 +21,14 @@ cat > TPFDS.props << EOF
     <Message Importance="High" Text="Copying output to %GAMEROOT%/BepInEx/plugins" />
     <Copy SourceFiles="@(Compiled)" DestinationFolder="\$(TMFDS_Root)/BepInEx/plugins" />
   </Target>
+
+  <Target Name="Copy test puzzle set" AfterTargets="Build">
+    <ItemGroup>
+      <TestPuzzle Include="$(ProjectDir)/test.puzzles.json" />
+    </ItemGroup>
+
+    <Message Importance="High" Text="Copying test puzzle to %GAMEROOT%/PuzzleSets" />
+    <Copy SourceFiles="@(TestPuzzle)" DestinationFolder="$(TMFDS_Root)/PuzzleSets" />
+  </Target>
 </Project>
 EOF
