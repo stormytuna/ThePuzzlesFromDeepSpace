@@ -9,7 +9,7 @@ public class CustomPuzzleSetData {
 	public ActData[] acts;
 	public PuzzleGroupData[] puzzleGroups { get; set; }
 	public Dictionary<string, PuzzleData> puzzles { get; set; }
-	public WordReactionData[] words { get; set; }
+	public DialogueEvent[] banter { get; set; }
 	public Dictionary<string, MeetingData> meetings { get; set; }
 	public Dictionary<string, SpeechBubbleData[]> conversations { get; set; }
 }
@@ -34,21 +34,51 @@ public class PuzzleGroupData {
 
 [Serializable]
 public class PuzzleData {
-	[Serializable]
-	public class Hint {
-		public int after_tries { get; set; }
-		public int[] on_repsonse { get; set; }
-	}
-	
 	public int[] message { get; set; }
 	public int[][] validResponses { get; set; }
-	public (string before, Hint[] hints) conversations { get; set; }
 }
 
 [Serializable]
-public class WordReactionData {
-	public int word { get; set; }
-	public Dictionary<string, string[]> reactions { get; set; }
+public class DialogueEvent {
+	[Serializable]
+	public class DictDefinition {
+		public int signal;
+		public string word;
+	}
+
+	[Serializable]
+	public class Condition {
+		#nullable enable
+		// Taco: NOTE: In most cases the explicit `= null` is not needed
+		// C# is dumb though, so I'd rather not risk it
+		public string? puzzleIs { get; set; } = null!;
+		public string? afterPuzzle { get; set; } = null!;
+		public string? beforePuzzle { get; set; } = null!;
+		public float? timeOnPuzzle { get; set; } = null!;
+		public float? sessionTime { get; set; } = null!;
+		public int? fails { get; set; } = null!;
+		public int? hintsReceived { get; set; } = null!;
+		public string? answerHas { get; set; } = null!;
+		public string? submittedAndWaiting { get; set; } = null!;
+		public string? submittedCorrect { get; set; } = null!;
+		public string? submittedWrong { get; set; } = null!;
+		public int[]? submittedAndWaitingSigs { get; set; } = null!;
+		public int[]? submittedCorrectSigs { get; set; } = null!;
+		public int[]? submittedWrongSigs { get; set; } = null!;
+		public string? changedWordTo { get; set; } = null!;
+		public string? changedWordFrom { get; set; } = null!;
+		public DictDefinition? changedSignalTo { get; set; } = null!;
+		public DictDefinition? changedSignalFrom { get; set; } = null!;
+		public DictDefinition? signalIs { get; set; } = null!;
+		public DictDefinition? signalContains { get; set; } = null!;
+		#nullable disable
+	}
+
+	public string name { get; set; } = "Banter";
+	public bool isHint { get; set; }
+	public Condition[] triggers { get; set; }
+	public string[] conversation { get; set; }
+	public bool disabled { get; set; }
 }
 
 [Serializable]

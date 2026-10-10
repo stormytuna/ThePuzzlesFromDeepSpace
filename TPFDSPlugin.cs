@@ -2,11 +2,15 @@
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.IO;
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 using UnityEngine;
 using Newtonsoft.Json;
 
@@ -26,6 +30,8 @@ public class TPFDSPlugin : BaseUnityPlugin
     {
         Logger = base.Logger;
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
+
+        CustomPuzzlesTest.IdeaClusterAggregator_ILHook.Apply();
 
         harmony.PatchAll();
         if (Directory.Exists(PuzzleSetsPath)) {
@@ -110,17 +116,67 @@ public static class CustomPuzzlesTest
         __instance.puzzleLists = data.puzzles;
 
         var breakWatcher = GameObject.FindFirstObjectByType<BreakWatcher>();
-        var meetings = data.meetings;
-        foreach (var obj in meetings) {
-            obj.meetingManager = GameObject.FindFirstObjectByType<MeetingManager>();
+        var manager = GameObject.FindFirstObjectByType<MeetingManager>();
+        foreach (var obj in data.meetings) {
+            obj.meetingManager = manager;
         }
         breakWatcher.puzzles = data.meetingPuzzles;
         breakWatcher.leaveRoomEvents = data.meetings;
+
+        var aggregator = GameObject.FindFirstObjectByType<IdeaAggregatorMono>().ideaAggregator;
+        aggregator.clusters = data.banter;
+        aggregator.clusterMap = [];
+        modded = true;
+        aggregator.InitClusterMap();
+        foreach (var entry in aggregator.clusterMap) {
+            TPFDSPlugin.Logger.LogInfo($"{entry.Key.title}, {entry.Value.listeners.Length}");
+        }
     }
 
     [HarmonyPatch(typeof(PuzzleManager), nameof(PuzzleManager.SetDataFromLoad))]
     [HarmonyPrefix]
     public static void FuckData(PuzzleManager __instance, ref ProgressData pd) {
         pd.currPuzz = 0;
+    }
+
+    [HarmonyPatch(typeof(ListenerCondition), nameof(ListenerCondition.MetCon))]
+    [HarmonyPostfix]
+    public static void MetCon(ListenerCondition __instance, ref bool __result) {
+        if (__result == false && __instance.puzzleIs && __instance.puzzValue == null) {
+            __result = true;
+        }
+    }
+
+    public static ILHook IdeaClusterAggregator_ILHook = new(
+        typeof(IdeaAggregator).GetMethod(nameof(IdeaAggregator.InitClusterMap), BindingFlags.NonPublic | BindingFlags.Instance),
+        InitIdeaClusterMapPatch,
+        new ILHookConfig() {
+            ManualApply = true,
+        }
+    );
+
+    static bool modded = false;
+    static void InitIdeaClusterMapPatch(ILContext il) {
+        TPFDSPlugin.Logger.LogInfo($"Patching {nameof(InitIdeaClusterMapPatch)}");
+        var cursor = new ILCursor(il);
+
+        cursor.Emit(OpCodes.Ldarg_0);
+        cursor.EmitDelegate((IdeaAggregator aggregator) => {
+            if (!modded) return;
+
+            aggregator.clusters[0].Activate(on: true);
+        });
+
+        if (!cursor.TryGotoNext(MoveType.Before, i => i.MatchStloc(0), i => i.MatchBr(out _))) {
+            TPFDSPlugin.Logger.LogError($"Failed to inject {nameof(InitIdeaClusterMapPatch)}");
+            return;
+        }
+
+        cursor.EmitDelegate((int startIndex) => {
+            var index = modded ? 1 : startIndex;
+            modded = false;
+
+            return index;
+        });
     }
 }
