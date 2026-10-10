@@ -89,6 +89,12 @@ public static class CustomPuzzlesTest
     [HarmonyPostfix]
     public static void OnLoad(ConsoleDisplay __instance) {
         __instance.UpdateToNewCompiler(new C_Reformatter());
+        #if DEBUG
+        var adder = GameObject.FindFirstObjectByType<TabAdder>();
+        foreach (var tab in adder.orderedTabs) {
+            tab.SetActive(true);
+        }
+        #endif
     }
 
     [HarmonyPatch(typeof(BreakWatcher), nameof(BreakWatcher.ClearedID))]
