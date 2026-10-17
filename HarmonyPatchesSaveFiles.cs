@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using HarmonyLib;
 using UnityEngine;
@@ -23,7 +24,7 @@ public static class HarmonyPatchesSaveFiles {
     public static string GetCurrentSavefileRoot() {
         // Currently the key into CustomStoryRepository (puzzle title) is used to name the savefile folder.
         // Alternatively, this could be the JSON filename of the puzzle, or a composite key like puzzle title + puzzle author.
-        return Application.persistentDataPath + Path.DirectorySeparatorChar + "TPFDS" + Path.DirectorySeparatorChar + TPFDSPlugin.SelectedPuzzle;
+        return Path.Combine(Application.persistentDataPath, "TPFDS", TPFDSPlugin.SelectedPuzzle);
     }
 
     public static bool SeedNewDictionaryFromBaseGameDictionary() {
@@ -35,7 +36,8 @@ public static class HarmonyPatchesSaveFiles {
     public static class ProgressSaver__GetBackupFilePath {
         public static void Postfix(ProgressSaver __instance, ref string __result, int week) {
             // TPFDSPlugin.Logger.LogDebug($"ProgressSaver.GetBackupFilePath {week} -> {__result}");
-            __result = GetCurrentSavefileRoot() + Path.DirectorySeparatorChar + __instance.fileName + __instance.backupPath + week + __instance.fileSuffix;
+            string fileName = __instance.fileName + __instance.backupPath + week + __instance.fileSuffix;
+            __result = Path.Combine(GetCurrentSavefileRoot(), fileName);
         }
     }
 
@@ -43,7 +45,8 @@ public static class HarmonyPatchesSaveFiles {
     public static class ProgressSaver__GetFilePath {
         public static void Postfix(ProgressSaver __instance, ref string __result) {
             // TPFDSPlugin.Logger.LogDebug($"ProgressSaver.GetFilePath void -> {__result}");
-            __result = GetCurrentSavefileRoot() + Path.DirectorySeparatorChar + __instance.fileName + __instance.fileSuffix;
+            string fileName = __instance.fileName + __instance.fileSuffix;
+            __result = Path.Combine(GetCurrentSavefileRoot(), fileName);
         }
     }
 
@@ -52,7 +55,8 @@ public static class HarmonyPatchesSaveFiles {
         public static void Postfix(ProgressSaver __instance, ref string __result) {
             // TPFDSPlugin.Logger.LogDebug($"ProgressSaver.GetOldFilePath void -> {__result}");
             string uniqueFileSafeTimeString = DataSaveLoad<int>.GetUniqueFileSafeTimeString();
-            __result = GetCurrentSavefileRoot() + Path.DirectorySeparatorChar + __instance.fileName + uniqueFileSafeTimeString + __instance.fileSuffix;
+            string fileName = __instance.fileName + uniqueFileSafeTimeString + __instance.fileSuffix;
+            __result = Path.Combine(GetCurrentSavefileRoot(), fileName);
         }
     }
 
@@ -60,7 +64,8 @@ public static class HarmonyPatchesSaveFiles {
     public static class DictionarySaver__GetBackupDictFilePath {
         public static void Postfix(DictionarySaver __instance, ref string __result, int week) {
             // TPFDSPlugin.Logger.LogDebug($"DictionarySaver.GetBackupDictFilePath {week} -> {__result}");
-            __result = GetCurrentSavefileRoot() + Path.DirectorySeparatorChar + __instance.fileName + "-" + __instance.dictCount + __instance.backupPath + week + __instance.fileSuffix;
+            string fileName = __instance.fileName + "-" + __instance.dictCount + __instance.backupPath + week + __instance.fileSuffix;
+            __result = Path.Combine(GetCurrentSavefileRoot(), fileName);
         }
     }
 
@@ -68,7 +73,8 @@ public static class HarmonyPatchesSaveFiles {
     public static class DictionarySaver__GetDictFilePath {
         public static void Postfix(DictionarySaver __instance, ref string __result, int dictID) {
             // TPFDSPlugin.Logger.LogDebug($"DictionarySaver.GetDictFilePath {dictID} -> {__result}");
-            __result = GetCurrentSavefileRoot() + Path.DirectorySeparatorChar + __instance.fileName + "-" + dictID + __instance.fileSuffix;
+            string fileName = __instance.fileName + "-" + dictID + __instance.fileSuffix;
+            __result = Path.Combine(GetCurrentSavefileRoot(), fileName);
         }
     }
 
@@ -77,7 +83,8 @@ public static class HarmonyPatchesSaveFiles {
         public static void Postfix(DictionarySaver __instance, ref string __result, int dictID) {
             // TPFDSPlugin.Logger.LogDebug($"DictionarySaver.GetOldDictFilePath {dictID} -> {__result}");
             string uniqueFileSafeTimeString = DataSaveLoad<int>.GetUniqueFileSafeTimeString();
-            __result = GetCurrentSavefileRoot() + Path.DirectorySeparatorChar + __instance.fileName + "-" + dictID + uniqueFileSafeTimeString + __instance.fileSuffix;
+            string fileName = __instance.fileName + "-" + dictID + uniqueFileSafeTimeString + __instance.fileSuffix;
+            __result = Path.Combine(GetCurrentSavefileRoot(), fileName);
         }
     }
 
@@ -94,8 +101,9 @@ public static class HarmonyPatchesSaveFiles {
             // No exception will be thrown if the directory was successfully created or already exists
             try {
                 Directory.CreateDirectory(GetCurrentSavefileRoot());
-            } catch {
+            } catch (Exception e) {
                 TPFDSPlugin.Logger.LogError($"Failed to find or create the save directory. Saving will likely silently fail.");
+                TPFDSPlugin.Logger.LogError($"Exception: {e}");
                 throw;
             }
 
@@ -107,8 +115,9 @@ public static class HarmonyPatchesSaveFiles {
                         TPFDSPlugin.Logger.LogInfo($"Will initialize modded dictionary with base game dictionary.");
                         try {
                             File.Copy(vanillaDictionary1Path, __instance.dictionarySaver.GetDictFilePath(1), false);
-                        } catch {
+                        } catch (Exception e) {
                             TPFDSPlugin.Logger.LogError($"Failed to copy the base game dictionary.");
+                            TPFDSPlugin.Logger.LogError($"Exception: {e}");
                             throw;
                         }
                     } else {
