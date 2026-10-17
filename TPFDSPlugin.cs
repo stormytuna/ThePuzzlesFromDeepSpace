@@ -21,7 +21,8 @@ public class TPFDSPlugin : BaseUnityPlugin
 {
     public static string PuzzleSetsPath = Path.Combine(Paths.GameRootPath, "PuzzleSets");
     public static List<(string directory, CustomPuzzleSetData puzzleSet)> Puzzles = [];
-    
+    public static string SelectedPuzzle = "";
+
     internal static new ManualLogSource Logger;
 
 	private readonly Harmony harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
@@ -51,6 +52,16 @@ public class TPFDSPlugin : BaseUnityPlugin
             Logger.LogInfo("Creating the directory for custom puzzle sets");
             Directory.CreateDirectory(PuzzleSetsPath);
         }
+
+        // polymeric: I placed this field in TPFDSPlugin to store the ID of the loaded puzzle.
+        //            From what I see the puzzle should be selected before Unity calls Autosaver.Start()
+        //            so we can use the game's original savefile loading routines.
+        //            Autosaver.Start() also eventually calls PuzzleManager.SetTotalPuzzleList().
+        // HarmonyPatchesSaveFiles.GetCurrentSavefileRoot
+        // CustomPuzzlesTest.FuckPuzzleList
+        // Taco: NOTE: Debug moment.
+        // Please put the test.puzzles.json file in %GAMEROOT%/PuzzleSets for this to work
+        TPFDSPlugin.SelectedPuzzle = "Puzzle Set One";
     }
 
     static List<(string, CustomPuzzleSetData)> LoadPuzzleSets() {
@@ -116,9 +127,7 @@ public static class CustomPuzzlesTest
     [HarmonyPatch(typeof(PuzzleManager), nameof(PuzzleManager.SetTotalPuzzleList))]
     [HarmonyPrefix]
     public static void FuckPuzzleList(PuzzleManager __instance) {
-        // Taco: NOTE: Debug moment.
-        // Please put the test.puzzles.json file in %GAMEROOT%/PuzzleSets for this to work 
-        var data = CustomStoryRepository.Get("Puzzle Set One");
+        var data = CustomStoryRepository.Get(TPFDSPlugin.SelectedPuzzle);
         __instance.puzzleLists = data.puzzles;
 
         var breakWatcher = GameObject.FindFirstObjectByType<BreakWatcher>();
