@@ -89,8 +89,6 @@ public class TPFDSPlugin : BaseUnityPlugin
     }
 }
 
-/// Taco: NOTE: BreakWatcher.puzzles[index] sets aftter which puzzle a break should start 
-
 [HarmonyPatch]
 public static class CustomPuzzlesTest
 {
@@ -100,12 +98,12 @@ public static class CustomPuzzlesTest
     [HarmonyPostfix]
     public static void OnLoad(ConsoleDisplay __instance) {
         __instance.UpdateToNewCompiler(new C_Reformatter());
-        #if DEBUG
-        var adder = GameObject.FindFirstObjectByType<TabAdder>();
-        foreach (var tab in adder.orderedTabs) {
-            tab.SetActive(true);
-        }
-        #endif
+        // #if DEBUG
+        // var adder = GameObject.FindFirstObjectByType<TabAdder>();
+        // foreach (var tab in adder.orderedTabs) {
+        //     tab.SetActive(true);
+        // }
+        // #endif
     }
 
     [HarmonyPatch(typeof(BreakWatcher), nameof(BreakWatcher.ClearedID))]
@@ -128,8 +126,10 @@ public static class CustomPuzzlesTest
     [HarmonyPrefix]
     public static void FuckPuzzleList(PuzzleManager __instance) {
         var data = CustomStoryRepository.Get(TPFDSPlugin.SelectedPuzzle);
+        // Setup puzzles
         __instance.puzzleLists = data.puzzles;
 
+        // Setup meetings
         var breakWatcher = GameObject.FindFirstObjectByType<BreakWatcher>();
         var manager = GameObject.FindFirstObjectByType<MeetingManager>();
         foreach (var obj in data.meetings) {
@@ -138,21 +138,46 @@ public static class CustomPuzzlesTest
         breakWatcher.puzzles = data.meetingPuzzles;
         breakWatcher.leaveRoomEvents = data.meetings;
 
+        // Setup enabling tabs
+        var adder = GameObject.FindFirstObjectByType<TabAdder>();
+        adder.puzzles = data.tabEnablers;
+        SortTabs(adder);
+
+        // Setup banter
         var aggregator = GameObject.FindFirstObjectByType<IdeaAggregatorMono>().ideaAggregator;
         aggregator.clusters = data.banter;
         aggregator.clusterMap = [];
         modded = true;
         aggregator.InitClusterMap();
-        foreach (var entry in aggregator.clusterMap) {
-            TPFDSPlugin.Logger.LogInfo($"{entry.Key.title}, {entry.Value.listeners.Length}");
+
+    }
+
+    /// <summary>
+    ///   Sorts <see cref="TabAdder.orderedTabs"/> and its inherited <see cref="UpdateWithPuzzleCount.puzzles"/>
+    ///   in place for use by <see cref="TabAdder.ClearedID(int, int)" /> <br />
+    ///   Uses selection sort
+    /// </summary>
+    static void SortTabs(TabAdder adder) {
+        int length = adder.puzzles.Length;
+        for (int i = 0; i < length; i++) {
+            for (int j = i; j < length; j++) {
+                if (adder.puzzles[j].TotalID < adder.puzzles[i].TotalID) {
+                    var temp = (adder.puzzles[i], adder.orderedTabs[i]);
+                    (adder.puzzles[i], adder.orderedTabs[i]) = (adder.puzzles[j], adder.orderedTabs[j]);
+                    (adder.puzzles[j], adder.orderedTabs[j]) = (temp.Item1, temp.Item2);
+                }
+            }
         }
     }
 
+    // Reset puzzle count to 0 for development
+    #if DEBUG
     [HarmonyPatch(typeof(PuzzleManager), nameof(PuzzleManager.SetDataFromLoad))]
     [HarmonyPrefix]
     public static void FuckData(PuzzleManager __instance, ref ProgressData pd) {
         pd.currPuzz = 0;
     }
+    #endif
 
     [HarmonyPatch(typeof(ListenerCondition), nameof(ListenerCondition.MetCon))]
     [HarmonyPostfix]

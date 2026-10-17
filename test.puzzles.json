@@ -11,6 +11,16 @@
   ],
   "puzzleGroups": [
     {
+      "title": "The Testing...",
+      "storyline": [
+        "puzzle:puzzle_1",
+        "tab:visual",
+        "puzzle:puzzle_1",
+        "tab:dictionary",
+        "puzzle:puzzle_1",
+      ]
+    },
+    {
       "title": "The Benining",
       "storyline": [
         "puzzle:puzzle_1",
@@ -55,17 +65,17 @@
       ]
     }
   },
-  "banter" : [
-    {
+  "banter" : {
+    "Dr.T is dumb": {
       "triggers": [
-        { "fails": "2" }
+        { "fails": 2 }
       ],
       "conversation": [
         "baka translator",
         "kitty :3"
       ]
     }
-  ],
+  },
   "meetings": {
     "test_1": {
       "progressAct": false,
@@ -116,6 +126,7 @@
       { "speaker": "Bautista", "text": "$animB1Translator..." },
       { "speaker": "Bautista", "text": "why so stupid" },
     ]
-  }
+  },
+  "format_version": 1
 }
 

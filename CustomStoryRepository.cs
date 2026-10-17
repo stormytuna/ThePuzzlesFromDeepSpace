@@ -13,6 +13,7 @@ public static class CustomStoryRepository  {
     static Dictionary<string, Puzzle[]> meetingPuzzles = [];
     static Dictionary<string, (string directory, MetaData meta)> info = [];
     static Dictionary<string, IdeaCluster[]> banter = [];
+    static Dictionary<string, Puzzle[]> tabEnablers = [];
 
     static void LogEventLoadError(string reason, string puzzleName, CustomPuzzleSetData data) {
         TPFDSPlugin.Logger.LogError($"Event \"{puzzleName}\" {reason}. Skipping {data.meta.name}");
@@ -20,8 +21,21 @@ public static class CustomStoryRepository  {
 
     static SignalMessage MessageFrom(int[] signals) => new SignalMessage() { signals = signals };
 
+    static Dictionary<string, int> Tabs = new() {
+        { "puzzle_log", 0 },
+        { "log", 1 },
+        { "ideas", 2 },
+        { "dictionary", 3 },
+        { "achievements", 4 },
+        { "calculator", 5 },
+        { "whiteboard", 6 },
+        { "reference", 7 },
+        { "visual", 8 },
+    };
+
     static bool IsPuzzle(string name) => name.StartsWith("puzzle:");
     static bool IsMeeting(string name) => name.StartsWith("meeting:");
+    static bool UnlocksTab(string name) => name.StartsWith("tab:");
 
     public static void Add(string directory, CustomPuzzleSetData data) {
         int total = 0;
@@ -38,8 +52,11 @@ public static class CustomStoryRepository  {
         var dialogues = CustomDialogueRepository.GetAllFromSet(data.meta.name);
 
         var addMeeting = false;
+        var addTab = new Queue<int>(capacity: Tabs.Count());
         var currAct = 0;
-        var puzzlesArray = new List<Puzzle>(capacity: data.puzzles.Count);
+        var puzzlesList = new List<Puzzle>(capacity: data.puzzles.Count);
+        var tabPuzzles = new Puzzle[Tabs.Count];
+        System.Array.Fill(tabPuzzles, new Puzzle() { totalID = int.MaxValue });
 
         foreach (var entry in data.puzzleGroups) {
             local = 0;
@@ -74,6 +91,9 @@ public static class CustomStoryRepository  {
                     if (addMeeting) {
                         local_meetingPuzzles.Add(vanillaPuzzle);
                         addMeeting = false;
+                    }
+                    while (addTab.TryDequeue(out var index)) {
+                        tabPuzzles[index] = vanillaPuzzle;
                     }
                     allPuzzles[data.meta.name][search] = vanillaPuzzle;
                 }
@@ -128,6 +148,14 @@ public static class CustomStoryRepository  {
                     previousMeeting.GetComponent<Meeting>().chainedLRE = thisMeeting.GetComponent<LeaveRoomEvent>();
                     addMeeting = false;
                 }
+                else if (UnlocksTab(storyEvent)) {
+                    var search = storyEvent["tab:".Length..];
+                    if (!Tabs.TryGetValue(search, out var index)) {
+                        LogEventLoadError("unknown type tab. Should be one of ", string.Join(", ", Tabs.Keys), data);
+                        return;
+                    }
+                    addTab.Enqueue(index);
+                }
                 else {
                     LogEventLoadError("unknown type of event. Should be one of \"puzzle:\" or \"meeting:\"", storyEvent, data);
                     return;
@@ -136,45 +164,41 @@ public static class CustomStoryRepository  {
             group.puzzles = puzzles.ToArray();
             groups.Add(group);
             finishedGroups.Enqueue(group);
-            puzzlesArray.AddRange(puzzles);
+            puzzlesList.AddRange(puzzles);
+        }
+
+        var puzzlesArray = puzzlesList.ToArray();
+        if (!LoadBanter(data, puzzlesArray)) {
+            return;
         }
 
         puzzles[data.meta.name] = groups.ToArray();
+        allPuzzlesArray[data.meta.name] = puzzlesArray;
         meetings[data.meta.name] = local_meetings.ToArray();
         meetingPuzzles[data.meta.name] = local_meetingPuzzles.ToArray();
         leaveRoomEvents[data.meta.name] = local_leaveRoomEvents.ToArray();
         info[data.meta.name] = (directory, data.meta);
-        allPuzzlesArray[data.meta.name] = puzzlesArray.ToArray();
-
-        if (!LoadBanter(data)) {
-            puzzles.Remove(data.meta.name);
-            meetings.Remove(data.meta.name);
-            meetingPuzzles.Remove(data.meta.name);
-            leaveRoomEvents.Remove(data.meta.name);
-            info.Remove(data.meta.name);
-            allPuzzlesArray.Remove(data.meta.name);
-            return;
-        }
+        tabEnablers[data.meta.name] = tabPuzzles;
 
         TPFDSPlugin.Logger.LogInfo($"Loaded {data.meta.name}");
     }
 
-    static bool BanterLoadError(string reason, int index) {
-        TPFDSPlugin.Logger.LogError($"Failed to load banter no.{index}: {reason}");
+    static bool BanterLoadError(string reason, string name) {
+        TPFDSPlugin.Logger.LogError($"Failed to load banter {name}: {reason}");
         return false;
     }
 
-    public static bool LoadBanter(CustomPuzzleSetData data) {
+    public static bool LoadBanter(CustomPuzzleSetData data, Puzzle[] allPuzzlesArray) {
         var maxConditions = typeof(DialogueEvent.Condition).GetFields().Length;
         var dialogues = CustomDialogueRepository.GetAllFromSet(data.meta.name);
-        // Taco: NOTE: Don't question the ValueTuple
-        // Thanks to ValueTuple we can support a null key
-        var clusters = new Dictionary<Puzzle, IdeaCluster>(capacity: allPuzzlesArray[data.meta.name].Length);
+        var clusters = new Dictionary<Puzzle, IdeaCluster>(capacity: allPuzzlesArray.Length);
         var nullCluster = new IdeaCluster() { puzzle = null, listeners = [] };
         var setPuzzles = allPuzzles[data.meta.name];
 
-        for (int i = 0; i < data.banter.Length; i++) {
-            var entry = data.banter[i];
+        foreach (var kvp in data.banter) {
+            var entry = kvp.Value;
+            var i = kvp.Key;
+
             if (entry.disabled)
                 continue;
 
@@ -366,6 +390,7 @@ public static class CustomStoryRepository  {
         public LeaveRoomEvent[] meetings;
         public Puzzle[] meetingPuzzles;
         public IdeaCluster[] banter;
+        public Puzzle[] tabEnablers;
     }
 
     public static SetData Get(string name) => new SetData() {
@@ -373,5 +398,6 @@ public static class CustomStoryRepository  {
         meetings = leaveRoomEvents[name],
         meetingPuzzles = meetingPuzzles[name],
         banter = banter[name],
+        tabEnablers = tabEnablers[name],
     };
 }

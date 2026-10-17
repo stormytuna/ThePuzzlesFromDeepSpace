@@ -9,9 +9,10 @@ public class CustomPuzzleSetData {
 	public ActData[] acts;
 	public PuzzleGroupData[] puzzleGroups { get; set; }
 	public Dictionary<string, PuzzleData> puzzles { get; set; }
-	public DialogueEvent[] banter { get; set; }
+	public Dictionary<string, DialogueEvent> banter { get; set; }
 	public Dictionary<string, MeetingData> meetings { get; set; }
 	public Dictionary<string, SpeechBubbleData[]> conversations { get; set; }
+	public int format_version { get; set; }
 }
 
 [Serializable]
