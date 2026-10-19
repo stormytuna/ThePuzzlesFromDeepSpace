@@ -39,7 +39,6 @@ public class TPFDSPlugin : BaseUnityPlugin
             Puzzles = LoadPuzzleSets();
 
             foreach (var entry in Puzzles) {
-                // If dialogue fails to load, abort loading the puzzle set fully
                 if (!CustomDialogueRepository.TryAdd(entry.puzzleSet))
                     continue;
                 if (!CustomMeetingRepository.TryAdd(entry.puzzleSet))
@@ -98,12 +97,6 @@ public static class CustomPuzzlesTest
     [HarmonyPostfix]
     public static void OnLoad(ConsoleDisplay __instance) {
         __instance.UpdateToNewCompiler(new C_Reformatter());
-        // #if DEBUG
-        // var adder = GameObject.FindFirstObjectByType<TabAdder>();
-        // foreach (var tab in adder.orderedTabs) {
-        //     tab.SetActive(true);
-        // }
-        // #endif
     }
 
     [HarmonyPatch(typeof(BreakWatcher), nameof(BreakWatcher.ClearedID))]
@@ -178,6 +171,21 @@ public static class CustomPuzzlesTest
         pd.currPuzz = 0;
     }
     #endif
+
+    [HarmonyPatch(typeof(DictionaryWindow), nameof(DictionaryWindow.Open))]
+    [HarmonyPostfix]
+    public static void AllowReformat(DictionaryWindow __instance) {
+        // Allow reformatting
+        __instance.ActivateGlobalOptions();
+        __instance.InitializeGlobalOptions();
+        __instance.globalOptionsButton.SetActive(true);
+    }
+
+    [HarmonyPatch(typeof(DictionaryNotes), nameof(DictionaryNotes.Open))]
+    [HarmonyPostfix]
+    public static void AllowReformatInNotes(DictionaryNotes __instance, DictionaryEntry de) {
+        __instance.TurnOnCompileSettings();
+    }
 
     [HarmonyPatch(typeof(ListenerCondition), nameof(ListenerCondition.MetCon))]
     [HarmonyPostfix]
