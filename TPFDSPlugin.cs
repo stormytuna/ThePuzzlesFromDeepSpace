@@ -43,6 +43,8 @@ public class TPFDSPlugin : BaseUnityPlugin
                     continue;
                 if (!CustomMeetingRepository.TryAdd(entry.puzzleSet))
                     continue;
+                if (!CustomHypothesisRepository.TryAdd(entry.puzzleSet))
+                    continue;
 
                 CustomStoryRepository.Add(entry.directory, entry.puzzleSet);
             }
@@ -143,6 +145,12 @@ public static class CustomPuzzlesTest
         modded = true;
         aggregator.InitClusterMap();
 
+        // Setup hypotheses
+        var hypoDict = GameObject.FindFirstObjectByType<DictionaryHypotheses>();
+        hypoDict.puzzles = data.hypotheses.triggers;
+        hypoDict.hypos = data.hypotheses.hypos;
+        hypoDict.termClusters = data.hypotheses.clusters;
+        hypoDict.ConfigDict();
     }
 
     /// <summary>

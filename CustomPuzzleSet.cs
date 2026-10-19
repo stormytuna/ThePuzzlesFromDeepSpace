@@ -10,6 +10,7 @@ public class CustomPuzzleSetData {
 	public ActData[] acts;
 	public PuzzleGroupData[] puzzleGroups { get; set; }
 	public Dictionary<string, PuzzleData> puzzles { get; set; }
+	public Dictionary<string, HypothesesData[]> hypotheses { get; set; }
 	public Dictionary<string, DialogueEvent> banter { get; set; }
 	public Dictionary<string, MeetingData> meetings { get; set; }
 	public Dictionary<string, SpeechBubbleData[]> conversations { get; set; }
@@ -39,6 +40,38 @@ public class PuzzleData {
 	public int[] message { get; set; }
 	public int[][] validResponses { get; set; }
 }
+
+#nullable enable
+[Serializable]
+public class HypothesesData {
+	public int word { get; set; }
+	[JsonIgnore]
+	public string AkersHypothesis => Alan ?? Akers ?? A;
+	[JsonIgnore]
+	public string BautistaHypothesis => Bryan ?? Bautista ?? B;
+	[JsonIgnore]
+	public string CarrieHypothesis => Carrie ?? Collins ?? C;
+
+	[JsonProperty]
+	string A { get; set; } = "???";
+	[JsonProperty]
+	string? Alan { get; set; }
+	[JsonProperty]
+	string? Akers { get; set; }
+	[JsonProperty]
+	string B { get; set; } = "???";
+	[JsonProperty]
+	string? Bryan { get; set; }
+	[JsonProperty]
+	string? Bautista { get; set; }
+	[JsonProperty]
+	string C { get; set; } = "???";
+	[JsonProperty]
+	string? Carrie { get; set; }
+	[JsonProperty]
+	string? Collins { get; set; }
+}
+#nullable disable
 
 [Serializable]
 public class DialogueEvent {

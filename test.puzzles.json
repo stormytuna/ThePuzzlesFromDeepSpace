@@ -13,10 +13,11 @@
     {
       "title": "The Testing...",
       "storyline": [
+        "tab:dictionary",
         "puzzle:puzzle_1",
+        "hypotheses:part_1",
         "tab:visual",
         "puzzle:puzzle_1",
-        "tab:dictionary",
         "puzzle:puzzle_1",
       ]
     },
@@ -44,10 +45,19 @@
   ],
   "puzzles": {
     "puzzle_1" : {
-      "message": [ 1, 2 ],
+      "message": [
+        -1,
+         1,
+         -2,
+         -1,
+         2,
+         -2,
+         -1,
+         3,
+         -2
+      ],
       "validResponses": [
-        [ 3, 4 ],
-        [ 4, 8 ]
+        [ -1, 4 ]
       ]
     },
     "puzzle_2" : {
@@ -64,6 +74,11 @@
         [ 4, 8 ]
       ]
     }
+  },
+  "hypotheses": {
+    "part_1" : [
+      { "word": -1, "Akers": "-", "Bautista": "-", "Carrie": "NEGATIVE" }
+    ]
   },
   "banter" : {
     "Dr.T is dumb": {

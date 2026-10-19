@@ -14,6 +14,9 @@ public static class CustomStoryRepository  {
     static Dictionary<string, (string directory, MetaData meta)> info = [];
     static Dictionary<string, IdeaCluster[]> banter = [];
     static Dictionary<string, Puzzle[]> tabEnablers = [];
+    static Dictionary<string, Puzzle[]> hypothesesTriggers = [];
+    static Dictionary<string, DictionaryHypotheses.TermCluster[]> termClusters = [];
+    static Dictionary<string, TermHypotheses[]> hypotheses = [];
 
     static void LogEventLoadError(string reason, string puzzleName, CustomPuzzleSetData data) {
         TPFDSPlugin.Logger.LogError($"Event \"{puzzleName}\" {reason}. Skipping {data.meta.name}");
@@ -36,6 +39,7 @@ public static class CustomStoryRepository  {
     static bool IsPuzzle(string name) => name.StartsWith("puzzle:");
     static bool IsMeeting(string name) => name.StartsWith("meeting:");
     static bool UnlocksTab(string name) => name.StartsWith("tab:");
+    static bool UnlocksHypotheses(string name) => name.StartsWith("hypotheses:");
 
     public static void Add(string directory, CustomPuzzleSetData data) {
         int total = 0;
@@ -45,18 +49,24 @@ public static class CustomStoryRepository  {
         var local_meetingPuzzles = new List<Puzzle>(capacity: groups.Capacity);
         var local_meetings = new List<GameObject>(capacity: local_meetingPuzzles.Capacity);
         var local_leaveRoomEvents = new List<LeaveRoomEvent>(capacity: local_meetingPuzzles.Capacity);
+        var puzzlesList = new List<Puzzle>(capacity: data.puzzles.Count);
 
         var finishedGroups = new Queue<PuzzleList>(capacity: data.puzzleGroups.Length);
 
-        var setMeetings = CustomMeetingRepository.Get(data.meta.name);
+        var setMeetings = CustomMeetingRepository.GetAllFromSet(data.meta.name);
         var dialogues = CustomDialogueRepository.GetAllFromSet(data.meta.name);
+        var setHypotheses = CustomHypothesisRepository.GetAllFromSet(data.meta.name);
 
+        var currAct = 0;
         var addMeeting = false;
         var addTab = new Queue<int>(capacity: Tabs.Count());
-        var currAct = 0;
-        var puzzlesList = new List<Puzzle>(capacity: data.puzzles.Count);
         var tabPuzzles = new Puzzle[Tabs.Count];
         System.Array.Fill(tabPuzzles, new Puzzle() { totalID = int.MaxValue });
+
+        var addHypotheses = new Queue<(DictionaryHypotheses.TermCluster cluster, TermHypotheses[] hypo)>(capacity: data.hypotheses.Count);
+        var hypothesesPuzzles = new List<Puzzle>(capacity: data.hypotheses.Count);
+        var local_hypotheses = new List<TermHypotheses>(capacity: data.hypotheses.Count);
+        var local_termClusters = new List<DictionaryHypotheses.TermCluster>(capacity: data.hypotheses.Count);
 
         foreach (var entry in data.puzzleGroups) {
             local = 0;
@@ -95,6 +105,11 @@ public static class CustomStoryRepository  {
                     while (addTab.TryDequeue(out var index)) {
                         tabPuzzles[index] = vanillaPuzzle;
                     }
+                    while (addHypotheses.TryDequeue(out var hypothesis)) {
+                        hypothesesPuzzles.Add(vanillaPuzzle);
+                        local_hypotheses.AddRange(hypothesis.hypo);
+                        local_termClusters.Add(hypothesis.cluster);
+                    }
                     allPuzzles[data.meta.name][search] = vanillaPuzzle;
                 }
                 else if (IsMeeting(storyEvent)) {
@@ -114,7 +129,6 @@ public static class CustomStoryRepository  {
                     progressData.actBreak = meetingObj.progressAct;
                     if (meetingObj.progressWeek || meetingObj.progressAct) {
                         progressData.listsCompleted = finishedGroups.ToArray();
-                        TPFDSPlugin.Logger.LogInfo(finishedGroups.Count);
                         finishedGroups.Clear();
                     }
                     if (meetingObj.progressAct) {
@@ -156,8 +170,17 @@ public static class CustomStoryRepository  {
                     }
                     addTab.Enqueue(index);
                 }
+                else if (UnlocksHypotheses(storyEvent)) {
+                    var search = storyEvent["hypotheses:".Length..];
+                    if (!setHypotheses.TryGetValue(search, out var hypothesis)) {
+                        LogEventLoadError("doesn't exist", search, data);
+                        return;
+                    }
+
+                    addHypotheses.Enqueue(hypothesis);
+                }
                 else {
-                    LogEventLoadError("unknown type of event. Should be one of \"puzzle:\" or \"meeting:\"", storyEvent, data);
+                    LogEventLoadError("unknown type of event. Should be one of \"puzzle:\", \"meeting:\", \"tab\", \"hypotheses\"", storyEvent, data);
                     return;
                 }
             }
@@ -172,13 +195,17 @@ public static class CustomStoryRepository  {
             return;
         }
 
-        puzzles[data.meta.name] = groups.ToArray();
-        allPuzzlesArray[data.meta.name] = puzzlesArray;
-        meetings[data.meta.name] = local_meetings.ToArray();
-        meetingPuzzles[data.meta.name] = local_meetingPuzzles.ToArray();
-        leaveRoomEvents[data.meta.name] = local_leaveRoomEvents.ToArray();
-        info[data.meta.name] = (directory, data.meta);
-        tabEnablers[data.meta.name] = tabPuzzles;
+        var setName = data.meta.name;
+        puzzles[setName] = groups.ToArray();
+        allPuzzlesArray[setName] = puzzlesArray;
+        meetings[setName] = local_meetings.ToArray();
+        meetingPuzzles[setName] = local_meetingPuzzles.ToArray();
+        leaveRoomEvents[setName] = local_leaveRoomEvents.ToArray();
+        info[setName] = (directory, data.meta);
+        tabEnablers[setName] = tabPuzzles;
+        termClusters[setName] = local_termClusters.ToArray();
+        hypothesesTriggers[setName] = hypothesesPuzzles.ToArray();
+        hypotheses[setName] = local_hypotheses.ToArray();
 
         TPFDSPlugin.Logger.LogInfo($"Loaded {data.meta.name}");
     }
@@ -391,6 +418,7 @@ public static class CustomStoryRepository  {
         public Puzzle[] meetingPuzzles;
         public IdeaCluster[] banter;
         public Puzzle[] tabEnablers;
+        public (DictionaryHypotheses.TermCluster[] clusters, Puzzle[] triggers, TermHypotheses[] hypos) hypotheses;
     }
 
     public static SetData Get(string name) => new SetData() {
@@ -399,5 +427,6 @@ public static class CustomStoryRepository  {
         meetingPuzzles = meetingPuzzles[name],
         banter = banter[name],
         tabEnablers = tabEnablers[name],
+        hypotheses = (termClusters[name], hypothesesTriggers[name], hypotheses[name])
     };
 }
