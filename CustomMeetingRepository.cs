@@ -6,7 +6,7 @@ namespace TPFDS;
 public static class CustomMeetingRepository {
     static Dictionary<string, Dictionary<string, GameObject>> meetings = [];
 
-    public static Dictionary<string, GameObject> Get(string setName) => meetings[setName];
+    public static Dictionary<string, GameObject> GetAllFromSet(string setName) => meetings[setName];
 
     static bool MeetingLoadError(string reason, string name, CustomPuzzleSetData data) {
         TPFDSPlugin.Logger.LogError($"Loading meeting {name} failed: {reason}. Skipping {data.meta.name}");
@@ -54,19 +54,19 @@ public static class CustomMeetingRepository {
                     processedRaw = "TODO: Build this from the dialogue frames",
                     frames = new DialogueFrame[] {
                         new DialogueFrame() {
-                            dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals["Alan"] } },
+                            dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals.AkersEntry } },
                             speaker = Speaker.Alan,
                         },
                         new DialogueFrame() {
-                            dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals["Bautista"] } },
+                            dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals.BautistaEntry } },
                             speaker = Speaker.BScientist,
                         },
                         new DialogueFrame() {
-                            dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals["Carrie"] } },
+                            dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals.CarrieEntry } },
                             speaker = Speaker.Carrie,
                         },
                         new DialogueFrame() {
-                            dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals["Doppler"] } },
+                            dialogueParts = new DialoguePart[] { new DialoguePart() { txt = meetingObj.journals.DopplerEntry } },
                             speaker = Speaker.Doppler,
                         },
                     }

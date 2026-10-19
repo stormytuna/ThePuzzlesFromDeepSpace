@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -84,11 +85,51 @@ public class DialogueEvent {
 
 [Serializable]
 public class MeetingData {
+	#nullable enable
+	public class JournalData {
+		[JsonIgnore]
+		public string AkersEntry => Alan ?? Akers ?? A;
+		[JsonIgnore]
+		public string BautistaEntry => Bryan ?? Bautista ?? B;
+		[JsonIgnore]
+		public string CarrieEntry => Carrie ?? Collins ?? C;
+		[JsonIgnore]
+		public string DopplerEntry => Douglas ?? Dopp ?? Doppler ?? D;
+
+		[JsonProperty]
+		string A { get; set; } = "";
+		[JsonProperty]
+		string? Alan { get; set; }
+		[JsonProperty]
+		string? Akers { get; set; }
+		[JsonProperty]
+		string B { get; set; } = "";
+		[JsonProperty]
+		string? Bryan { get; set; }
+		[JsonProperty]
+		string? Bautista { get; set; }
+		[JsonProperty]
+		string C { get; set; } = "";
+		[JsonProperty]
+		string? Carrie { get; set; }
+		[JsonProperty]
+		string? Collins { get; set; }
+		[JsonProperty]
+		string D { get; set; } = "";
+		[JsonProperty]
+		string? Douglas { get; set; }
+		[JsonProperty]
+		string? Dopp { get; set; }
+		[JsonProperty]
+		string? Doppler { get; set; }
+	}
+	#nullable disable
+	
 	public bool progressAct { get; set; }
 	public bool progressWeek { get; set; }
 	public string room { get; set; }
 	public string[] conversations { get; set; }
-	public Dictionary<string, string> journals { get; set; }
+	public JournalData journals { get; set; }
 }
 
 [Serializable]
