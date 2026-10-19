@@ -14,7 +14,9 @@
       "title": "The Testing...",
       "storyline": [
         "tab:dictionary",
+        "tab:reference",
         "puzzle:puzzle_1",
+        "reference:math",
         "hypotheses:part_1",
         "tab:visual",
         "puzzle:puzzle_1",

@@ -99,12 +99,7 @@ public static class CustomPuzzlesTest
     [HarmonyPostfix]
     public static void OnLoad(ConsoleDisplay __instance) {
         __instance.UpdateToNewCompiler(new C_Reformatter());
-    }
-
-    [HarmonyPatch(typeof(BreakWatcher), nameof(BreakWatcher.ClearedID))]
-    [HarmonyPostfix]
-    public static void Testing(int id, int prevExceeded) {
-        TPFDSPlugin.Logger.LogInfo("Found something: " + id);
+        __instance.readMessageGroup.transform.Find("Recompile").gameObject.SetActive(true);
     }
 
     [HarmonyPatch(typeof(ConsoleDisplay), nameof(ConsoleDisplay.UpdateToNewCompiler))]
@@ -151,6 +146,13 @@ public static class CustomPuzzlesTest
         hypoDict.hypos = data.hypotheses.hypos;
         hypoDict.termClusters = data.hypotheses.clusters;
         hypoDict.ConfigDict();
+
+        // Setup reference tab stuff
+        var referenceTab = GameObject.FindFirstObjectByType<ReferenceWindow>();
+        referenceTab.viewport.transform.Find("Math").gameObject.SetActive(false);
+        var referenceWatcher = referenceTab.GetComponent<MiscPuzzleEventWatcher>();
+        referenceWatcher.puzzles = data.reference.puzzles;
+        referenceWatcher.puzzleEvents = data.reference.events;
     }
 
     /// <summary>
